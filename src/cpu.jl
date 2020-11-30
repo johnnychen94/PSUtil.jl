@@ -4,6 +4,8 @@
 
 Return system CPU times as a named tuple.
 
+If `cpu_id::Integer` is provided, the result is for that specific CPU (logical) core.
+
 # Outputs
 
 Every attribute represents the seconds the CPU has spent in the given mode. The attributes
@@ -41,7 +43,7 @@ proc`.
 julia> using PSUtil
 
 julia> PSUtil.cpu_times()
-(user = "5155237", nice = "19599", system = "1484534", idle = "613900742", iowait = "111170", irq = "0", softirq = "482710", steal = "0", guest = "0", guest_nice = "0")
+(user = 5243197, nice = 24218, system = 1518950, idle = 621296540, iowait = 114376, irq = 0, softirq = 491843, steal = 0, guest = 0, guest_nice = 0)
 ```
 
 To get cpu times stat per thread:
@@ -63,8 +65,108 @@ function cpu_times(::Linux, cpu_id::Union{Nothing, Integer}=nothing)
     end
 
     k = (:user, :nice, :system, :idle, :iowait, :irq, :softirq, :steal, :guest, :guest_nice)
-    v = @view split(record)[2:end]
+    v = map(x->parse(Int, x), split(record)[2:end])
     return (; zip(k, v)...)
 end
 
 ### END: cpu_times
+
+### BEGIN: cpu_percent
+
+"""
+    cpu_percent(cpu_id=nothing; interval=1) -> percentage
+    cpu_percent(last_idle, last_total, cpu_id=nothing)
+
+Return a float representing the current system-wide CPU utilization as a percentage.
+
+# Inputs
+
+To query usage for specific CPU core, you can optionally pass `cpu_id::Integer`.
+
+If `lastidle` and `lasttotal` are provided, it calculates the CPU utilization since when the numbers
+are recorded. Otherwise, it will calculate the CPU utilization from now to `interval` seconds later,
+which is a blocking routine.
+
+# Examples
+
+```julia
+julia> using PSUtil
+
+julia> PSUtil.cpu_percent() # blocks the current thread by `interval` seconds
+1.2432656444260282
+```
+
+`last_idle` and `last_total` can be book kept so that you can formulate a daemon script, for
+example, the following script reports the CPU utilization every 5 seconds:
+
+```julia
+last_idle, last_total = 0, 0
+while true
+    utilization, last_idle, last_total = cpu_percent(last_idle, last_total)
+    println(utilization)
+    sleep(5)
+end
+```
+
+To query cpu percentage for all cpus asynchronously (so that the process only get blocked by
+`interval` seconds instead of `n * interval` seconds):
+
+```julia
+results = map(t->t.result,
+    @sync map(0:PSUtil.cpu_count()-1) do i
+        t = @async PSUtil.cpu_percent(i; interval=1)
+    end
+)
+```
+"""
+cpu_percent
+
+function cpu_percent(sys::AbstractSystem, cpu_id=nothing; interval=1)
+    _, idle, total = cpu_percent(sys, 0, 0, cpu_id)
+    sleep(interval)
+    utilization, _, _ = cpu_percent(sys, idle, total)
+    return utilization
+end
+
+function cpu_percent(::AbstractSystem, last_idle, last_total, cpu_id::Union{Nothing, Integer}=nothing; interval=nothing)
+    isnothing(interval) || @warn "keyword `interval` is not used in non-block version."
+
+    records = cpu_times(cpu_id)
+    idle, total = records.idle, sum(records)
+    Δidle, Δtotal = idle - last_idle, total - last_total
+
+    utlization = 100 * (1 - Δidle/Δtotal)
+    return utlization, idle, total
+end
+
+### END: cpu_percent
+
+### BEGIN: cpu_count
+
+"""
+    cpu_count(;logical=true)
+
+Return the number of logical CPUs in the system (same as `Sys.CPU_THREADS`).
+
+`logical` cores means the number of physical cores multiplied by the number of threads that can run on
+each core (this is known as Hyper Threading). If `logical` is `false` return the number of physical
+cores only (Hyper Thread CPUs are excluded) or `nothing` if undetermined. 
+
+# Examples
+
+Example on a system having 2 physical hyper-thread CPU cores:
+
+```julia
+julia> import psutil
+julia> psutil.cpu_count()
+4
+julia> psutil.cpu_count(logical=false)
+2
+```
+
+See also: For more detailed CPU information, you can use [`CpuId.jl`](https://github.com/m-j-w/CpuId.jl).
+"""
+
+cpu_count(::AbstractSystem; logical=true) = logical ?  CpuId.cputhreads() : CpuId.cpucores()
+
+### END: cpu_count

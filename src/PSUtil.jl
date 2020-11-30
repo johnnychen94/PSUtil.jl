@@ -1,14 +1,18 @@
 module PSUtil
 
+using CpuId
+
 include("utils.jl")
 include("traits.jl")
 include("cpu.jl")
 include("compat.jl")
 
-
 const CURRENT_SYS = AbstractSystem[UnknownSystem()]
 
-query_functions = [:cpu_times]
+query_functions = [
+    # cpu.jl
+    :cpu_times, :cpu_percent, :cpu_count
+    ]
 
 for f in query_functions
     @eval $f(args...; kwargs...) = $f(current_system(), args...; kwargs...)

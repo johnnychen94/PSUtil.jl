@@ -1,5 +1,5 @@
 using PSUtil
-using Test
+using Test, Suppressor
 
 using PSUtil: current_system, Linux, MacOS
 
