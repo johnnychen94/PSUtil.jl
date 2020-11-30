@@ -1,12 +1,12 @@
 ```@meta
-CurrentModule = psUtils
+CurrentModule = PSUtil
 ```
 
-# psUtils
+# PSUtil
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [psUtils]
+Modules = [PSUtil]
 ```

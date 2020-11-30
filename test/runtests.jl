@@ -1,6 +1,8 @@
-using psUtils
+using PSUtil
 using Test
 
-@testset "psUtils.jl" begin
-    # Write your tests here.
+using PSUtil: current_system, Linux, MacOS
+
+@testset "PSUtil.jl" begin
+    include("cpu.jl")
 end

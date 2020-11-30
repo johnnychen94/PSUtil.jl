@@ -1,14 +1,12 @@
-using psUtils
+using PSUtil
 using Documenter
 
 makedocs(;
-    modules=[psUtils],
-    authors="Johnny Chen <johnnychen94@hotmail.com>",
-    repo="https://github.com/johnnychen94/psUtils.jl/blob/{commit}{path}#L{line}",
-    sitename="psUtils.jl",
+    modules=[PSUtil],
+    sitename="PSUtil.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://johnnychen94.github.io/psUtils.jl",
+        canonical="https://johnnychen94.github.io/PSUtil.jl",
         assets=String[],
     ),
     pages=[
@@ -17,5 +15,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/johnnychen94/psUtils.jl",
+    repo="github.com/johnnychen94/PSUtil.jl",
 )

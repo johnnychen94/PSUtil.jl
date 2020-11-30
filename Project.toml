@@ -1,4 +1,4 @@
-name = "psUtils"
+name = "PSUtil"
 uuid = "c9359990-26aa-4132-a63f-2538fba6135e"
 authors = ["Johnny Chen <johnnychen94@hotmail.com>"]
 version = "0.1.0"
