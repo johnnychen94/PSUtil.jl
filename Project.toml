@@ -7,7 +7,7 @@ version = "0.1.0-dev"
 CpuId = "adafc99b-e345-5852-983c-f28acb93d879"
 
 [compat]
-CpuId = "0.2"
+CpuId = "0.2, 0.3"
 Suppressor = "0.2"
 julia = "1"
 
